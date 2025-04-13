@@ -1,22 +1,52 @@
+# celery_app.py
+# app/tasks/celery_app.py
+
 from celery import Celery
 import os
 from dotenv import load_dotenv
+#from app.tasks import tasks
 
-# Load environment variables from the .env file
 load_dotenv()
 
-# Define the Celery app
+# celery_app = Celery(
+#     'app',
+#     broker=os.getenv("REDIS_BROKER", "redis://localhost:6379/0"),
+#     backend=os.getenv("REDIS_BACKEND", "redis://localhost:6379/0")
+# )
+
+# celery_app = Celery(
+#     'app',
+#     broker="redis://localhost:6379/0",
+#     backend="redis://localhost:6379/0"
+# )
+
 celery_app = Celery(
-    'tasks',
-    broker=os.getenv("REDIS_BROKER", "redis://redis:6379/0"),  # Use default if not in .env
-    backend=os.getenv("REDIS_BACKEND", "redis://redis:6379/0")  # Use default if not in .env
+    'app',
+    broker="redis://localhost:6379/0",
 )
 
+# Автоматический поиск задач в указанной папке
+#celery_app.autodiscover_tasks('app.tasks', force=True)
+
+#celery_app.autodiscover_tasks(['app', 'app.tasks', 'app.handlers', 'app.handlers.rooms'])
 celery_app.autodiscover_tasks()
 
-# Optionally define custom task routes if needed
-celery_app.conf.task_routes = {
-    "app.tasks.*": {"queue": "default"},
-}
+# celery_app.conf.task_routes = {
+#     "app.tasks.*": {"queue": "default"},
+#     "*": {"queue": "default"},
+# }
 
-# Celery app is now ready for use
+"""
+Для просмотра задач Celery можно использовать flower
+
+1. Импортировать pip install flower
+
+2. celery -A app.tasks.celery_app flower --port=5555
+
+3. http://localhost:5555
+
+"""
+
+# celery -A app.tasks.celery_app worker --loglevel=info
+# celery -A app.tasks.celery_app worker --loglevel=info --pool=solo
+# celery -A app.tasks.celery_app:celery_app worker --loglevel=debug --pool=solo

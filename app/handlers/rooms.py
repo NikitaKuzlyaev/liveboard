@@ -1,24 +1,33 @@
+# rooms.py
+# app/handlers/rooms.py
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Request, Form, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
-from db.database import get_db
-from db.crud.room import create_room
+from app.db.database import get_db
+from app.db.crud.room import create_room
 from uuid import uuid4
+import logging
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from db.database import get_db
-from db.models import Room, User
-from tasks.tasks import delete_room_task
+from app.db.database import get_db
+from app.db.models import Room, User
+from app.tasks.tasks import delete_room_task
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 router = APIRouter(prefix="/room", tags=["room"])
 
 # Храним все подключения к комнате в словаре
 active_connections = {}
 
+
+# Настройка логгера
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)  # Устанавливаем уровень логирования
 
 @router.post('/')
 async def create_new_room(name: str = Form(...), db: AsyncSession = Depends(get_db)):
@@ -37,14 +46,16 @@ async def create_new_room(name: str = Form(...), db: AsyncSession = Depends(get_
     room.creator_id = user.id
     await db.commit()
 
-    # Запускаем задачу на удаление комнаты через час после ее создания
+    logger.info(f"Before delete_room_task")
     delete_room_task.apply_async(args=[room.uuid], countdown=10)
+    #delete_room_task.apply_async(args=[room.uuid])
+    logger.info(f"under delete_room_task")
 
     return RedirectResponse(url=f"/room/{room.uuid}", status_code=302)
 
 
 @router.get("/{room_uuid}", response_class=HTMLResponse)
-async def room_page(room_uuid: str, request: Request, db: AsyncSession = Depends(get_db)):
+async def room_page(room_uuid: UUID, request: Request, db: AsyncSession = Depends(get_db)):
     # Выполняем запрос для получения комнаты с указанным UUID
     result = await db.execute(select(Room).filter(Room.uuid == room_uuid))
     room = result.scalar_one_or_none()  # Получаем одну запись или None, если комната не найдена
