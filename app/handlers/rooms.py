@@ -1,0 +1,85 @@
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Request, Form, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
+from db.database import get_db
+from db.crud.room import create_room
+from uuid import uuid4
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from db.database import get_db
+from db.models import Room, User
+
+templates = Jinja2Templates(directory="templates")
+
+router = APIRouter(prefix="/room", tags=["room"])
+
+# Храним все подключения к комнате в словаре
+active_connections = {}
+
+
+@router.post('/')
+async def create_new_room(name: str = Form(...), db: AsyncSession = Depends(get_db)):
+    # Генерация UUID для комнаты
+    room_uuid = uuid4()
+
+    # Создание пользователя и комнаты
+    user = User(name=name, room_id=room_uuid)
+    room = Room(uuid=room_uuid, is_open=True, creator_id=None)
+
+    # Сохраняем пользователя и комнату в базе данных
+    db.add_all([room, user])
+    await db.commit()
+
+    # Связываем комнату с пользователем через creator_id
+    room.creator_id = user.id
+    await db.commit()
+
+    return RedirectResponse(url=f"/room/{room.uuid}", status_code=302)
+
+
+@router.get("/{room_uuid}", response_class=HTMLResponse)
+async def room_page(room_uuid: str, request: Request, db: AsyncSession = Depends(get_db)):
+    # Выполняем запрос для получения комнаты с указанным UUID
+    result = await db.execute(select(Room).filter(Room.uuid == room_uuid))
+    room = result.scalar_one_or_none()  # Получаем одну запись или None, если комната не найдена
+
+    if not room:
+        # Если комната не найдена, возвращаем ошибку 404 (можно сделать редирект или вывести сообщение)
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    # Передаем uuid комнаты в шаблон
+    return templates.TemplateResponse("room.html", {"request": request, "room_uuid": room_uuid})
+
+
+@router.websocket("/ws/{room_uuid}")
+async def websocket_endpoint(websocket: WebSocket, room_uuid: str):
+    # Ожидаем подключения клиента
+    await websocket.accept()
+
+    # Добавляем клиента в активные соединения
+    if room_uuid not in active_connections:
+        active_connections[room_uuid] = []
+
+    active_connections[room_uuid].append(websocket)
+
+    try:
+        while True:
+            # Ожидаем сообщения от клиента
+            message = await websocket.receive_text()
+
+            # Рассылаем сообщение всем подключенным клиентам этой комнаты
+            for connection in active_connections[room_uuid]:
+                if connection != websocket:
+                    await connection.send_text(message)
+    except WebSocketDisconnect:
+        # Убираем подключение из активных при отключении
+        active_connections[room_uuid].remove(websocket)
+        if not active_connections[room_uuid]:
+            del active_connections[room_uuid]
+
+
+@router.get('/')
+async def connect_room():
+    return 200, {'message': 'ok. it works'}

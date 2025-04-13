@@ -1,0 +1,37 @@
+from fastapi import FastAPI, Depends, Request, Form
+from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import uuid4
+from handlers import routers
+
+from db.database import get_db
+from db.models import Room, User
+from db.init_db import init_models
+
+
+app = FastAPI()
+
+templates = Jinja2Templates(directory="templates")
+
+for router in routers:
+    app.include_router(router=router)
+
+
+@app.on_event("startup")
+async def startup():
+
+    await init_models()
+    print('DB IS OK!!!')
+
+
+@app.get("/", response_class=HTMLResponse)
+async def main_page(request: Request):
+    return templates.TemplateResponse("main.html", {"request": request})
+
+
+"""
+
+uvicorn main:app --reload
+
+"""
