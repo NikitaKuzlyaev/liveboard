@@ -1,41 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Room</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Room</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f6fa;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      background-color: #2f3640;
+      color: #f5f6fa;
+      padding: 10px 20px;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .top-bar .url {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-right: 10px;
+    }
+
+    .copy-btn {
+      background-color: #00a8ff;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .copy-btn:hover {
+      background-color: #0097e6;
+    }
+
+    h1 {
+      margin: 20px;
+      color: #2f3640;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      margin: 0 20px 20px;
+      flex-grow: 1;
+    }
+
+    textarea {
+      width: 100%;
+      flex-grow: 1;
+      padding: 15px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #dcdde1;
+      resize: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: box-shadow 0.3s ease;
+    }
+
+    textarea:focus {
+      outline: none;
+      box-shadow: 0 4px 12px rgba(99, 110, 114, 0.2);
+    }
+
+    .toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #2ecc71;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 8px;
+      font-size: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      animation: fadeOut 1.5s ease forwards;
+    }
+
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+  </style>
 </head>
 <body>
-    <h1>Room {{ room_uuid }}</h1>
+  <div class="top-bar">
+    <div class="url" id="page-url"></div>
+    <button class="copy-btn" onclick="copyURL()">Copy URL</button>
+  </div>
 
-    <div>
-        <textarea id="text_area" placeholder="Type your message here..." rows="10" cols="50"></textarea>
-    </div>
+  <h1>Room {{ room_uuid }}</h1>
 
-    <script>
-        const roomUuid = "{{ room_uuid }}";
-        const socket = new WebSocket(`ws://127.0.0.1:8000/room/ws/${roomUuid}`);
+  <div class="container">
+    <textarea id="text_area" placeholder="Type your message here..."></textarea>
+  </div>
 
-        // Отправка сообщения при изменении текста
-        document.getElementById('text_area').addEventListener('input', (event) => {
-            const message = event.target.value;
-            socket.send(message);
-        });
+  <div id="toast" class="toast">Скопировано</div>
 
-        // Получение сообщений от сервера
-        socket.onmessage = function(event) {
-            document.getElementById('text_area').value = event.data;
-        };
+  <script>
+    const roomUuid = "{{ room_uuid }}";
+    const socket = new WebSocket(`ws://127.0.0.1:8000/room/ws/${roomUuid}`);
 
-        // Обработка ошибок WebSocket
-        socket.onerror = function(error) {
-            console.log('WebSocket Error:', error);
-        };
+    const textarea = document.getElementById('text_area');
 
-        // Закрытие WebSocket соединения
-        socket.onclose = function(event) {
-            console.log('WebSocket closed:', event);
-        };
-    </script>
+    textarea.addEventListener('input', (event) => {
+      socket.send(event.target.value);
+    });
+
+    socket.onmessage = function(event) {
+      textarea.value = event.data;
+    };
+
+    socket.onerror = function(error) {
+      console.error('WebSocket Error:', error);
+    };
+
+    socket.onclose = function(event) {
+      console.log('WebSocket closed:', event);
+    };
+
+    document.getElementById('page-url').textContent = window.location.href;
+
+    function copyURL() {
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => showToast());
+    }
+
+    function showToast() {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 1500);
+    }
+  </script>
+
+  <script>
+     textarea.addEventListener('keydown', function (e) {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+
+        // Вставляем табуляцию (можно заменить на '    ' — 4 пробела)
+        const tab = '\t';
+
+        // Обновляем значение
+        this.value = this.value.substring(0, start) + tab + this.value.substring(end);
+
+        // Перемещаем курсор после вставленного таба
+        this.selectionStart = this.selectionEnd = start + tab.length;
+      }
+    });
+  </script>>
+
 </body>
 </html>
