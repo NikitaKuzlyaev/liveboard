@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from db.database import get_db
 from db.models import Room, User
+from tasks.tasks import delete_room_task
 
 templates = Jinja2Templates(directory="templates")
 
@@ -35,6 +36,9 @@ async def create_new_room(name: str = Form(...), db: AsyncSession = Depends(get_
     # Связываем комнату с пользователем через creator_id
     room.creator_id = user.id
     await db.commit()
+
+    # Запускаем задачу на удаление комнаты через час после ее создания
+    delete_room_task.apply_async(args=[room.uuid], countdown=10)
 
     return RedirectResponse(url=f"/room/{room.uuid}", status_code=302)
 
