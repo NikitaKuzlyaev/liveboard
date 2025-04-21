@@ -4,7 +4,6 @@
 from celery import Celery
 import os
 from dotenv import load_dotenv
-#from app.tasks import tasks
 
 load_dotenv()
 
@@ -14,27 +13,12 @@ load_dotenv()
 #     backend=os.getenv("REDIS_BACKEND", "redis://localhost:6379/0")
 # )
 
-# celery_app = Celery(
-#     'app',
-#     broker="redis://localhost:6379/0",
-#     backend="redis://localhost:6379/0"
-# )
-
 celery_app = Celery(
     'app',
     broker="redis://localhost:6379/0",
 )
 
-# Автоматический поиск задач в указанной папке
-#celery_app.autodiscover_tasks('app.tasks', force=True)
-
-#celery_app.autodiscover_tasks(['app', 'app.tasks', 'app.handlers', 'app.handlers.rooms'])
 celery_app.autodiscover_tasks()
-
-# celery_app.conf.task_routes = {
-#     "app.tasks.*": {"queue": "default"},
-#     "*": {"queue": "default"},
-# }
 
 """
 Для просмотра задач Celery можно использовать flower

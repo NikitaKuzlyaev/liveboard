@@ -14,7 +14,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.db.database import get_db
-from app.db.models import Room, User
+from app.db.models import Room, SiteUser, RoomUser
 from app.tasks.tasks import delete_room_task
 
 templates = Jinja2Templates(directory="app/templates")
@@ -35,15 +35,15 @@ async def create_new_room(name: str = Form(...), db: AsyncSession = Depends(get_
     room_uuid = uuid4()
 
     # Создание пользователя и комнаты
-    user = User(name=name, room_id=room_uuid)
+    room_user = RoomUser(name=name, room_id=room_uuid)
     room = Room(uuid=room_uuid, is_open=True, creator_id=None)
 
     # Сохраняем пользователя и комнату в базе данных
-    db.add_all([room, user])
+    db.add_all([room, room_user])
     await db.commit()
 
     # Связываем комнату с пользователем через creator_id
-    room.creator_id = user.id
+    room.creator_id = room_user.id
     await db.commit()
 
     logger.info(f"Before delete_room_task")
