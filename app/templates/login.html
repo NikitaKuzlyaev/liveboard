@@ -1,3 +1,4 @@
+<!-- templates/login.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -5,8 +6,10 @@
     <title>Авторизация</title>
 </head>
 <body>
+    {% include 'header.html' %}
+
     <h2>Вход</h2>
-    <form id="login-form">
+    <form method="post" action="/token">
         <label for="username">Имя пользователя:</label><br>
         <input type="text" id="username" name="username" required><br><br>
 
@@ -16,34 +19,8 @@
         <button type="submit">Войти</button>
     </form>
 
-    <div id="result" style="margin-top: 20px;"></div>
-
-    <script>
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const formData = new URLSearchParams();
-            formData.append('username', document.getElementById('username').value);
-            formData.append('password', document.getElementById('password').value);
-
-            const response = await fetch('/token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: formData
-            });
-
-            const resultDiv = document.getElementById('result');
-            if (response.ok) {
-                const data = await response.json();
-                resultDiv.innerHTML = `<p style="color:green;">Успешный вход! Токен: <code>${data.access_token}</code></p>`;
-                // Можно сохранить токен в localStorage
-                localStorage.setItem('token', data.access_token);
-            } else {
-                resultDiv.innerHTML = `<p style="color:red;">Ошибка авторизации</p>`;
-            }
-        });
-    </script>
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% endif %}
 </body>
 </html>

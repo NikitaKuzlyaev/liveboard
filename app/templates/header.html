@@ -1,0 +1,58 @@
+<!-- templates/header.html -->
+<header>
+    <h1>LiveBoard</h1>
+    <div id="auth-container">
+
+    </div>
+</header>
+
+
+<script>
+    function getCookie(name) {
+        const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? decodeURIComponent(match[2]) : null;
+    }
+
+    const username = getCookie("username");
+
+    const container = document.getElementById("auth-container");
+
+    if (username) {
+        container.innerHTML = `<span class="username">${username}</span>`;
+    } else {
+        container.innerHTML = `<a href="/login" class="auth-button">Войти</a>`;
+    }
+</script>
+
+
+<style>
+    header {
+        background-color: #4CAF50;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        padding: 15px 30px;
+        align-items: center;
+    }
+
+    header h1 {
+        margin: 0;
+    }
+
+    .auth-button, .username {
+        color: white;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+    .auth-button {
+        padding: 8px 16px;
+        background-color: #333;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .auth-button:hover {
+        background-color: #555;
+    }
+</style>

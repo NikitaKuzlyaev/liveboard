@@ -1,3 +1,4 @@
+<!-- templates/room.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -107,6 +108,9 @@
   </style>
 </head>
 <body>
+  <!-- Включаем хедер -->
+    {% include 'header.html' %}
+
   <div class="top-bar">
     <div class="url" id="page-url"></div>
     <button class="copy-btn" onclick="copyURL()">Copy URL</button>

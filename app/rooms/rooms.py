@@ -1,20 +1,18 @@
 # rooms.py
 # app/handlers/rooms.py
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Request, Form, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi.responses import RedirectResponse, HTMLResponse
-from fastapi.templating import Jinja2Templates
-from app.db.database import get_db
-from app.db.crud.room import create_room
-from uuid import uuid4
 import logging
 from uuid import UUID
+from uuid import uuid4
 
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Request, Form, HTTPException
+from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
 from app.db.database import get_db
-from app.db.models import Room, SiteUser, RoomUser
+from app.db.models import Room, RoomUser
 from app.tasks.tasks import delete_room_task
 
 templates = Jinja2Templates(directory="app/templates")
@@ -24,10 +22,10 @@ router = APIRouter(prefix="/room", tags=["room"])
 # Храним все подключения к комнате в словаре
 active_connections = {}
 
-
 # Настройка логгера
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)  # Устанавливаем уровень логирования
+
 
 @router.post('/')
 async def create_new_room(name: str = Form(...), db: AsyncSession = Depends(get_db)):
@@ -48,7 +46,7 @@ async def create_new_room(name: str = Form(...), db: AsyncSession = Depends(get_
 
     logger.info(f"Before delete_room_task")
     delete_room_task.apply_async(args=[room.uuid], countdown=10)
-    #delete_room_task.apply_async(args=[room.uuid])
+    # delete_room_task.apply_async(args=[room.uuid])
     logger.info(f"under delete_room_task")
 
     return RedirectResponse(url=f"/room/{room.uuid}", status_code=302)
