@@ -1,5 +1,5 @@
 # celery_app.py
-# app/tasks/celery_app.py
+# app/services/tasks/celery_app.py
 
 from celery import Celery
 import os

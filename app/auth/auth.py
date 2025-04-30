@@ -1,5 +1,5 @@
 # auth.py
-# app/auth/auth.py
+# app\auth\auth.py
 
 from datetime import datetime, timedelta
 from typing import Optional
@@ -27,21 +27,19 @@ router = APIRouter(prefix="", tags=["auth"])
 
 class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
     async def __call__(self, request: Request) -> Optional[str]:
-        token = request.cookies.get("token")  # Пробуем взять токен из Cookie
+        token = request.cookies.get("token")
         if token:
             return token
 
-        # Если нет токена в cookie — fallback на стандартное поведение (заголовки)
         return await super().__call__(request)
 
 
-# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl="/token")
 
 # -------------------- Конфигурация ----------------------
 SECRET_KEY = "i_hate_when_somebody_hugging_me"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 1
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -155,7 +153,6 @@ async def login_with_token(
     access_token = create_access_token(
         data={"sub": user.name}, expires_delta=access_token_expires
     )
-    # return {"access_token": access_token, "token_type": "bearer", "username": user.name}
 
     response = RedirectResponse("/", status_code=302)
     response.set_cookie(key="username", value=user.name, httponly=False)
@@ -200,18 +197,18 @@ async def read_users_me(
     return {"id": user.id, "name": user.name}
 
 
-@router.get("/confirm/{validation_string}", response_class=HTMLResponse)
-async def confirm_account(
-        validation_string: str
-) -> Response:
-    """
-    """
-    result = await db.execute(select(RegistrationConfirmation).filter(RegistrationConfirmation.validation_string == validation_string))
-    confirm: RegistrationConfirmation = result.scalar_one_or_none()
-
-    site_user = await db.execute(select(SiteUser).filter(SiteUser.id == confirm.user_id)).scalar_one_or_none()
-
-    if not room:
-        raise HTTPException(status_code=404, detail="Confirm not found")
-
-    return templates.TemplateResponse("confirmed.html", {"request": request})
+# @router.get("/confirm/{validation_string}", response_class=HTMLResponse)
+# async def confirm_account(
+#         validation_string: str
+# ) -> Response:
+#     """
+#     """
+#     result = await db.execute(select(RegistrationConfirmation).filter(RegistrationConfirmation.validation_string == validation_string))
+#     confirm: RegistrationConfirmation = result.scalar_one_or_none()
+#
+#     site_user = await db.execute(select(SiteUser).filter(SiteUser.id == confirm.user_id)).scalar_one_or_none()
+#
+#     if not room:
+#         raise HTTPException(status_code=404, detail="Confirm not found")
+#
+#     return templates.TemplateResponse("confirmed.html", {"request": request})

@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship, declarative_base
 import uuid
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import DateTime, func
 
 Base = declarative_base()
 
@@ -11,9 +12,6 @@ Base = declarative_base()
 alembic revision --autogenerate -m "db change"
 alembic upgrade head
 
-
-alembic revision --autogenerate -m "db change"
-alembic upgrade head
 
 """
 
@@ -53,5 +51,5 @@ class RegistrationConfirmation(Base):
     id = Column(Integer, primary_key=True, index=True)
     validation_string = Column(String, index=True, unique=True)
     user_id = Column(Integer)
-    created_at = Column()
+    created_at = Column(DateTime, default=func.now())
     is_active = Column(Boolean, default=False)
