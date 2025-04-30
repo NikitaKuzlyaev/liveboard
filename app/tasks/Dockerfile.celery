@@ -1,0 +1,23 @@
+FROM python:3.10-slim
+
+# Устанавливаем рабочую директорию внутри контейнера
+WORKDIR /app
+
+# Копируем все файлы проекта в рабочую директорию
+COPY . .
+
+# Обновляем pip
+RUN pip install --upgrade pip
+RUN pip install flower
+
+# Устанавливаем зависимости из requirements.txt
+RUN pip install -r requirements.txt
+
+# Устанавливаем зависимости для Celery
+# RUN apt-get update && apt-get install -y build-essential
+
+# Открываем порты для Celery (не обязательно)
+EXPOSE 5555
+
+# Запускаем Celery воркер
+CMD ["celery", "-A", "celery_app", "worker", "--loglevel=info"]

@@ -1,0 +1,45 @@
+<!-- templates/main.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Создание комнаты</title>
+</head>
+<body>
+    <!-- Включаем хедер -->
+    {% include 'header.html' %}
+
+
+    <h1>Введи своё имя</h1>
+
+    <form action="/room" method="post">
+        <input type="text" name="name" placeholder="Имя комнаты" required>
+        <button type="submit">Создать комнату</button>
+    </form>
+
+    {% if token %}
+        <p></p>
+    {% else %}
+        <a href="/login">
+            <button>Авторизация</button>
+        </a>
+        <a href="/register">
+            <button>Регистрация</button>
+        </a>
+    {% endif %}
+
+
+</body>
+
+<script>
+    function updateToken() {
+
+        const token = localStorage.getItem('token');
+
+        if (token) {
+            const username = localStorage.getItem('username') || 'Пользователь';
+        }
+    }
+    updateToken();
+</script>
+
+</html>
