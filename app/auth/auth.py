@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import RedirectResponse
 
 from app.db.database import get_db
-from app.db.models import SiteUser
+from app.db.models import SiteUser, RegistrationConfirmation
 
 templates = Jinja2Templates(directory="app/templates")
 
@@ -27,7 +27,7 @@ router = APIRouter(prefix="", tags=["auth"])
 
 class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
     async def __call__(self, request: Request) -> Optional[str]:
-        token = request.cookies.get("token") # Пробуем взять токен из Cookie
+        token = request.cookies.get("token")  # Пробуем взять токен из Cookie
         if token:
             return token
 
@@ -164,7 +164,11 @@ async def login_with_token(
 
 
 @router.get("/logout")
-async def logout(response: Response):
+async def logout(
+        response: Response
+):
+    """
+    """
     response = RedirectResponse("/", status_code=302)
     response.delete_cookie("username")
     response.delete_cookie("token")
@@ -194,3 +198,20 @@ async def read_users_me(
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
     return {"id": user.id, "name": user.name}
+
+
+@router.get("/confirm/{validation_string}", response_class=HTMLResponse)
+async def confirm_account(
+        validation_string: str
+) -> Response:
+    """
+    """
+    result = await db.execute(select(RegistrationConfirmation).filter(RegistrationConfirmation.validation_string == validation_string))
+    confirm: RegistrationConfirmation = result.scalar_one_or_none()
+
+    site_user = await db.execute(select(SiteUser).filter(SiteUser.id == confirm.user_id)).scalar_one_or_none()
+
+    if not room:
+        raise HTTPException(status_code=404, detail="Confirm not found")
+
+    return templates.TemplateResponse("confirmed.html", {"request": request})

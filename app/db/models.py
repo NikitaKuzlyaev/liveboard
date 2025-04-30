@@ -17,6 +17,7 @@ alembic upgrade head
 
 """
 
+
 class Room(Base):
     __tablename__ = "rooms"
 
@@ -42,4 +43,15 @@ class SiteUser(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
+    is_registration_complete = Column(Boolean, default=False)
     hashed_password = Column(String)
+
+
+class RegistrationConfirmation(Base):
+    __tablename__ = "regs_confirms"
+
+    id = Column(Integer, primary_key=True, index=True)
+    validation_string = Column(String, index=True, unique=True)
+    user_id = Column(Integer)
+    created_at = Column()
+    is_active = Column(Boolean, default=False)

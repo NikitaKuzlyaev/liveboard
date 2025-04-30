@@ -1,8 +1,13 @@
 <!-- templates/header.html -->
 <header>
     <h1>LiveBoard</h1>
-    <div id="auth-container">
+    <div style="display: flex; justify-content: space-between;">
+        <div id="username-container" style="margin-right: 10px;">
 
+        </div>
+        <div id="login_logout-container" style="margin-right: 10px;">
+
+        </div>
     </div>
 </header>
 
@@ -15,12 +20,15 @@
 
     const username = getCookie("username");
 
-    const container = document.getElementById("auth-container");
+    const username_container = document.getElementById("username-container");
+    const login_logout_container = document.getElementById("login_logout-container");
+
 
     if (username) {
-        container.innerHTML = `<span class="username">${username}</span>`;
+        username_container.innerHTML = `<span class="username">${username}</span>`;
+        login_logout_container.innerHTML = `<a href="/logout" class="auth-button">Выйти</a>`;
     } else {
-        container.innerHTML = `<a href="/login" class="auth-button">Войти</a>`;
+        login_logout_container.innerHTML = `<a href="/login" class="auth-button">Войти</a>`;
     }
 </script>
 
