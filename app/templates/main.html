@@ -1,45 +1,73 @@
-<!-- templates/main.html -->
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
+    <meta charset="UTF-8">
     <title>Создание комнаты</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
 </head>
-<body>
-    <!-- Включаем хедер -->
+<body class="bg-light">
     {% include 'header.html' %}
 
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h1 class="card-title text-center mb-4">Введи своё имя</h1>
 
-    <h1>Введи своё имя</h1>
+                        <form action="/room" method="post">
+                            <div class="mb-3">
+                                <input type="text" name="name" placeholder="Имя комнаты" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Создать комнату</button>
+                        </form>
 
-    <form action="/room" method="post">
-        <input type="text" name="name" placeholder="Имя комнаты" required>
-        <button type="submit">Создать комнату</button>
-    </form>
+                        <div id="auth-section">
+                            <!-- Проверка авторизации -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    {% if token %}
-        <p></p>
-    {% else %}
-        <a href="/login">
-            <button>Авторизация</button>
-        </a>
-        <a href="/register">
-            <button>Регистрация</button>
-        </a>
-    {% endif %}
+    <script>
+        function getCookie(name) {
+            let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            if (match) return match[2];
+            return null;
+        }
 
+        function checkAuth() {
+            const token = getCookie('username');
+            const authSection = document.getElementById('auth-section');
+
+            if (token) {
+                authSection.innerHTML = `
+                    <p class="mt-3 text-center">Вы авторизованы, создавайте комнату!</p>
+                    <div class="text-center mt-3">
+                        <a href="/room/my" class="btn btn-info w-100">Мои комнаты</a>
+                    </div>
+                `;
+            } else {
+                authSection.innerHTML = `
+                    <div class="mt-3 text-center">
+                        <a href="/login">
+                            <button class="btn btn-secondary">Авторизация</button>
+                        </a>
+                        <a href="/register">
+                            <button class="btn btn-success ml-2">Регистрация</button>
+                        </a>
+                    </div>
+                `;
+            }
+        }
+
+        checkAuth();
+    </script>
 
 </body>
-
-<script>
-    function updateToken() {
-
-        const token = localStorage.getItem('token');
-
-        if (token) {
-            const username = localStorage.getItem('username') || 'Пользователь';
-        }
-    }
-    updateToken();
-</script>
-
 </html>

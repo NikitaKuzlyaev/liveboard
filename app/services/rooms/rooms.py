@@ -1,5 +1,5 @@
 # rooms.py
-# app/handlers/rooms.py
+# app\services\rooms\rooms.py
 
 import logging
 from uuid import UUID
@@ -20,11 +20,9 @@ templates = Jinja2Templates(directory="app/templates")
 
 router = APIRouter(prefix="/room", tags=["room"])
 
-active_connections = {}  # Храним все подключения к комнате в словаре
+active_connections = {}
 
-# Настройка логгера
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 
 @router.post('/')
@@ -41,7 +39,7 @@ async def create_new_room(
     await db.commit()
 
     logger.info(f"Before delete_room_task")
-    delete_room_task.apply_async(args=[room.uuid], countdown=10)
+    delete_room_task.apply_async(args=[room.uuid], countdown=7200)
     logger.info(f"under delete_room_task")
 
     return RedirectResponse(url=f"/room/{room.uuid}", status_code=302)
@@ -55,15 +53,14 @@ async def room_page(
 ):
     """
     """
-    # Выполняем запрос для получения комнаты с указанным UUID
     result = await db.execute(select(Room).filter(Room.uuid == room_uuid))
-    room = result.scalar_one_or_none()  # Получаем одну запись или None, если комната не найдена
+    room = result.scalar_one_or_none()
+
+    logger.error('dsds')
 
     if not room:
-        # Если комната не найдена, возвращаем ошибку 404 (можно сделать редирект или вывести сообщение)
         raise HTTPException(status_code=404, detail="Room not found")
 
-    # Передаем uuid комнаты в шаблон
     return templates.TemplateResponse("room.html", {"request": request, "room_uuid": room_uuid})
 
 
@@ -74,23 +71,22 @@ async def websocket_endpoint(
 ):
     """
     """
-    await websocket.accept()  # Ожидаем подключения клиента
+    await websocket.accept()
 
-    if room_uuid not in active_connections:  # Добавляем клиента в активные соединения
+    if room_uuid not in active_connections:
         active_connections[room_uuid] = []
 
     active_connections[room_uuid].append(websocket)
 
     try:
         while True:
-            message = await websocket.receive_text()  # Ожидаем сообщения от клиента
-            # Рассылаем сообщение всем подключенным клиентам этой комнаты
+            message = await websocket.receive_text()
             for connection in active_connections[room_uuid]:
                 if connection != websocket:
                     await connection.send_text(message)
 
     except WebSocketDisconnect:
-        active_connections[room_uuid].remove(websocket)  # Убираем подключение из активных при отключении
+        active_connections[room_uuid].remove(websocket)
         if not active_connections[room_uuid]:
             del active_connections[room_uuid]
 
